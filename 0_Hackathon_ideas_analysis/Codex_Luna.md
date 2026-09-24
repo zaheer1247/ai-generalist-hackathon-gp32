@@ -1,4 +1,4 @@
-# Hackathon Project Selection Report by Codex
+# Hackathon Project Selection Report by Codex Luna
 
 ## Summary
 
