@@ -98,6 +98,45 @@ That last sentence is the whole product. Everything else is CRUD around it.
 | Session history and CRUD on saved sessions | Should | – |
 | Voice answers, PDF export, multi-JD compare, mock panel | Won't | – |
 
+## Signature features: what makes it stand out
+
+A match score on its own is not unique. Jobscan and Teal already score a resume against a JD and list the gaps. Final Round AI already runs mock interviews built from your resume and JD. To win on creativity, the app has to do something none of them do: **connect what you say in the interview back to your resume, and coach you to be honest about the gaps you can't hide.**
+
+### What the market already does
+
+| Product | What it already does | What it doesn't do |
+| --- | --- | --- |
+| [Jobscan](https://www.jobscan.co/) | Resume vs JD match rate, missing skills, ATS checks, and an AI interview practice tool it added recently | Resume matching and interview practice are separate tools; a good answer never improves your resume |
+| [Teal](https://www.tealhq.com/tool/resume-job-description-match) | 0–100% match score, missing keywords, tailoring tips | No interview practice built from those gaps |
+| [Final Round AI](https://www.finalroundai.com/ai-mock-interview) | Voice mock interviews using your resume and JD, debriefs that flag weak moments to re-drill | No resume-side score; nothing on gaps you truly lack |
+| [Google Interview Warmup](https://interviewsidekick.com/blog/interview-warmup) | Free practice, 5 questions per session, typed or spoken answers | [Reviewers note](https://interviewsidekick.com/blog/interview-warmup) no resume or JD input and no saved sessions |
+
+Avoid competing on what they already do well: voice interviews, ATS formatting checks, full resume builders. You won't beat funded products at their own features in 48 hours.
+
+### Six features that would stand out
+
+| # | Feature | What it does | Why no one has it | Build cost | Moment in the demo |
+| --- | --- | --- | --- | --- | --- |
+| 1 | **Answer-to-Bullet** ⭐ | A strong practice answer becomes a ready-to-paste resume bullet, and the requirement's match improves | Competitors keep resume and interview practice separate; this connects them | Low: two extra fields on `grade-answer` | "Your interview answer just fixed your resume" |
+| 2 | **Honest Gap Coach** ⭐ | For requirements you truly lack, writes an honest answer ("I haven't run Terraform in production, but…") plus a 7-day plan to start closing the gap | Other tools help you tailor what you have; none coach you through what you don't have | Low: one prompt, one card | The missing skill turns from a dead end into a script |
+| 3 | **Red-Flag Radar** ⭐ | Reads the resume the way a sceptical hiring manager would: a career gap, a senior title with no leadership proof, job hopping. Predicts the probing question for each | Scoring tools look for keywords; none show what an interviewer would doubt | Low: one prompt, one panel | "Here's what they'll doubt before you walk in" |
+| 4 | **Truth Check** | Flags claims in answers that the resume can't back up, before an interviewer catches them | AI tailoring tools often inflate claims; this one keeps you honest | Low: add one field to grading | A warning badge on an overclaimed answer |
+| 5 | **Story Coverage Map** | Pulls 5–6 reusable career stories (STAR format: situation, task, action, result) from the resume and maps them against the requirements; empty cells show where you have no story | Story banks exist, but I haven't seen one shown as a coverage map against a specific JD | Medium: one prompt plus a grid | A heatmap that fills in during practice |
+| 6 | **Recurring Gap Radar** | Across all saved job descriptions: "Kubernetes appears in 7 of your 9 targets and is missing from your resume" | Existing tools score one posting at a time | Medium: normalise skills and group by them | Tells you what to learn next, not just what to type |
+
+### What to build
+
+Build the three starred features alongside the core flow, and no more. Together they make one clear story: *find out what they'll doubt, answer it honestly, and let every good answer improve your resume.* That is a fresh take, not a template, and it can be said in one sentence on stage.
+
+- **Answer-to-Bullet** replaces "score recalculation" as the Should-have. It is the same mechanism, but it gives the user something they can use: a resume bullet, not just a number.
+- **Red-Flag Radar** and **Honest Gap Coach** go on the Gap Report screen as two cards. Each is a single Edge Function call made when the report loads.
+- **Truth Check** is nearly free once grading exists. Add it in Phase 3 if the core flow runs cleanly by hour 36.
+- **Story Coverage Map** and **Recurring Gap Radar** are the "what's next" line in the pitch. Show them as a mockup or a slide, not a build.
+
+New Edge Functions: `red-flags` and `gap-coach`. Data model additions: `answers.suggested_bullet`, `answers.unsupported_claims`, `requirements.honest_answer`, `requirements.bridge_plan`, and a `red_flags` table (session_id, flag, likely_question).
+
+**Updated demo arc:** score lands at 58% → Red-Flag Radar shows the two things a hiring manager will probe → Honest Gap Coach scripts the missing skill → practise the weakest requirement → answer becomes a resume bullet → score climbs to 81%. Every step is something the judges have not seen in another tool.
+
 ## Architecture
 
 Stack: **Bolt.new** (React + Tailwind front end), **Supabase** (Postgres, auth, storage, row-level security), **OpenAI API** via Supabase Edge Functions. This matches the stack the playbook recommends, which matters — a hackathon is the wrong place to debug an unfamiliar toolchain.
