@@ -1,7 +1,18 @@
 {
   "mcpServers": {
     "supabase": {
-      "serverUrl": "https://mcp.supabase.com/mcp?project_ref=ivmfzbdzgzvcgzvwmolf&features=docs%2Caccount%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching"
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--access-token",
+        "",
+        "--project-ref",
+        "ivmfzbdzgzvcgzvwmolf"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": ""
+      }
     }
   }
 }
