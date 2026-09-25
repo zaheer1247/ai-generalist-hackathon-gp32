@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "lovable": {
+      "source": "10k-digital/lovable-agent-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/lovable/skills/lovable/SKILL.md",
+      "computedHash": "a9a1a1c5a03b6863ca4cd23bf662690822c67e0e3b5e55f62e84e5cf1764e910"
+    },
     "supabase": {
       "source": "supabase/agent-skills",
       "sourceType": "github",
