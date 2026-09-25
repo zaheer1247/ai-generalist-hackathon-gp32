@@ -7,8 +7,8 @@ This project is configured to work seamlessly with **Supabase** for database man
 ## 1. Project Configuration Summary
 
 - **Project Ref:** `ivmfzbdzgzvcgzvwmolf`
-- **API URL:** `https://ivmfzbdzgzvcgzvwmolf.supabase.co`
-- **Publishable Key:** `sb_publishable_calLsS97UzlH2dQmWpRJDg_sO8nI7vV`
+- **API URL:** Configured via environment variables
+- **API Keys:** Managed strictly via local `.env` (never committed or hardcoded)
 - **Status:** **Active & Connected**
 
 ---

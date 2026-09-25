@@ -20,5 +20,5 @@ trigger: always_on
 
 ## Client Integration
 1. Use the typed Supabase client from `src/lib/supabaseClient.ts`.
-2. Do not hardcode service role keys or management tokens into client-side code.
+2. **Zero API Key Hardcoding:** Never hardcode any API keys (anon keys, publishable keys, service-role keys, or access tokens) in source code, configuration files, or documentation. All secrets must stay strictly in git-ignored `.env` or managed via secure environment variables.
 3. Keep server-side AI endpoints or sensitive logic in Supabase Edge Functions or backend routes.
