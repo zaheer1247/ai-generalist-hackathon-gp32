@@ -11,6 +11,10 @@ trigger: always_on
 - **Type Definitions:** `src/types/database.types.ts`
 - **Client Helper:** `src/lib/supabaseClient.ts`
 
+## Mandatory Connection & Tool Policy
+1. **Never Use API Keys to Connect:** NEVER use API keys (anon keys, publishable keys, service-role keys, or access tokens) in terminal commands (e.g., `curl`, shell scripts, CLI commands, or ad-hoc scripts) to connect to, test, or query Supabase. Never read `.env` to extract keys for manual HTTP/REST queries.
+2. **Always Use the Supabase MCP Server:** ALL database operations, connectivity checks, schema queries, table modifications, migrations, SQL executions, type generation, edge function management, and log queries MUST be performed exclusively via the **Supabase MCP tools** (`list_tables`, `execute_sql`, `apply_migration`, `generate_typescript_types`, etc.).
+
 ## Database & Schema Guidelines
 1. **Inspect Before Altering:** Always inspect existing tables via `list_tables` before generating or running migrations.
 2. **Row Level Security (RLS):** Every new table in the `public` schema MUST have RLS enabled (`ALTER TABLE ... ENABLE ROW LEVEL SECURITY;`) and explicit security policies (`CREATE POLICY ...`).
@@ -20,5 +24,6 @@ trigger: always_on
 
 ## Client Integration
 1. Use the typed Supabase client from `src/lib/supabaseClient.ts`.
-2. **Zero API Key Hardcoding:** Never hardcode any API keys (anon keys, publishable keys, service-role keys, or access tokens) in source code, configuration files, or documentation. All secrets must stay strictly in git-ignored `.env` or managed via secure environment variables.
+2. **Zero API Key Hardcoding:** Never hardcode any API keys in source code, configuration files, or documentation.
 3. Keep server-side AI endpoints or sensitive logic in Supabase Edge Functions or backend routes.
+
