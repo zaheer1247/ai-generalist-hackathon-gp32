@@ -1,0 +1,1125 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>PlanPulse Mission Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#0B0F17; --surface:#141A24; --surface-2:#1C2431; --surface-3:#232D3C;
+  --border:#263141; --border-strong:#35435A;
+  --text:#E8EDF5; --muted:#94A3B8; --faint:#64748B;
+  --accent:#4F8CFF; --accent-hover:#6BA0FF; --accent-soft:rgba(79,140,255,.12);
+  --r-none:#3FBF8F; --r-low:#7DD3A0; --r-med:#F0B429; --r-high:#F97316; --r-severe:#EF4444;
+  --radius:10px; --radius-lg:14px;
+  --shadow:0 18px 40px rgba(0,0,0,.55);
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+.numeral{font-family:var(--mono); font-variant-numeric:tabular-nums}
+.label{font-size:11px; font-weight:500; letter-spacing:.055em; text-transform:uppercase; color:var(--muted)}
+button{font:inherit; color:inherit; cursor:pointer; background:none; border:none}
+input,select,textarea{font:inherit; color:var(--text)}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:6px}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--surface-3); border-radius:8px; border:3px solid var(--bg)}
+
+/* ---------- prototype frame ---------- */
+.frame{max-width:1440px; margin:0 auto; padding-block:14px; padding-left:16px; padding-right:16px}
+.protobar{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:12px}
+.proto-tag{display:inline-flex; align-items:center; gap:7px; font-size:11px; font-weight:600;
+  letter-spacing:.06em; text-transform:uppercase; color:var(--faint); padding-right:6px}
+.proto-tag i{width:6px;height:6px;border-radius:50%;background:var(--accent);display:block}
+.screens{display:flex; gap:4px; background:var(--surface); border:1px solid var(--border);
+  padding:4px; border-radius:var(--radius); flex-wrap:wrap}
+.screens button{padding:6px 12px; border-radius:7px; font-size:12.5px; font-weight:500; color:var(--muted)}
+.screens button[aria-selected="true"]{background:var(--surface-3); color:var(--text)}
+.screens button:hover{color:var(--text)}
+.hint{margin-left:auto; font-size:12px; color:var(--faint)}
+
+.window{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+  overflow:hidden; box-shadow:var(--shadow)}
+.chrome{display:flex; align-items:center; gap:8px; padding:9px 14px; background:var(--surface-2);
+  border-bottom:1px solid var(--border)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--surface-3)}
+.url{flex:1; text-align:center; font-size:11.5px; color:var(--faint); font-family:var(--mono)}
+
+/* ---------- app shell ---------- */
+.topbar{display:flex; align-items:center; gap:14px; padding:0 16px; height:56px;
+  border-bottom:1px solid var(--border); background:var(--bg)}
+.brand{display:flex; align-items:center; gap:9px; font-weight:650; letter-spacing:-.01em}
+.brand svg{display:block}
+.proj{display:flex; align-items:center; gap:8px; padding:5px 10px; border-radius:8px;
+  background:var(--surface-2); border:1px solid var(--border); font-size:13px; font-weight:500}
+.proj .chev{color:var(--faint)}
+.spacer{flex:1}
+.chip-health{display:flex; align-items:center; gap:8px; padding:5px 11px; border-radius:99px;
+  border:1px solid var(--border); background:var(--surface-2); font-size:12px}
+.chip-health b{font-family:var(--mono); font-size:13px}
+.av{width:26px;height:26px;border-radius:50%; display:grid; place-items:center; font-size:10.5px;
+  font-weight:650; background:var(--surface-3); color:var(--text); border:1px solid var(--border-strong); flex:none}
+.av.sm{width:21px;height:21px;font-size:9px}
+
+.stage{min-height:620px; background:var(--bg)}
+.pad{padding:22px}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:8px 14px;
+  border-radius:8px; font-size:13px; font-weight:550; background:var(--surface-2);
+  border:1px solid var(--border-strong); transition:background .12s ease, border-color .12s ease}
+.btn:hover{background:var(--surface-3)}
+.btn.primary{background:var(--accent); border-color:var(--accent); color:#06122B; font-weight:650}
+.btn.primary:hover{background:var(--accent-hover)}
+.btn.wide{width:100%}
+.btn.ghost{background:none; border-color:transparent; color:var(--muted)}
+.btn.ghost:hover{color:var(--text); background:var(--surface-2)}
+.btn.danger{color:var(--r-severe); border-color:rgba(239,68,68,.35)}
+.btn[disabled]{opacity:.55; cursor:default}
+
+/* ---------- auth ---------- */
+.auth{display:grid; place-items:center; min-height:620px; padding:24px}
+.auth-card{width:100%; max-width:380px; text-align:center}
+.auth-mark{width:46px;height:46px;border-radius:12px;background:var(--accent-soft);
+  border:1px solid rgba(79,140,255,.3); display:grid; place-items:center; margin:0 auto 18px}
+.auth h1{font-size:25px; margin:0 0 7px; letter-spacing:-.02em}
+.auth p.sub{margin:0 0 26px; color:var(--muted); font-size:13.5px}
+.field{text-align:left; margin-bottom:12px}
+.field label{display:block; margin-bottom:5px}
+.field input{width:100%; padding:9px 11px; border-radius:8px; background:var(--surface-2);
+  border:1px solid var(--border); font-size:13.5px}
+.field input:focus{border-color:var(--accent); outline:none}
+.or{display:flex; align-items:center; gap:12px; margin:18px 0; color:var(--faint); font-size:11.5px}
+.or::before,.or::after{content:""; height:1px; flex:1; background:var(--border)}
+
+/* ---------- dashboard ---------- */
+.grid-proj{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px}
+.pcard{position:relative; background:var(--surface); border:1px solid var(--border);
+  border-left:3px solid var(--r-med); border-radius:var(--radius); padding:16px; cursor:pointer;
+  transition:border-color .12s ease, transform .12s ease}
+.pcard:hover{border-color:var(--border-strong); transform:translateY(-1px)}
+.pcard h3{margin:0 0 3px; font-size:15px; font-weight:600}
+.pcard .meta{color:var(--faint); font-size:12px}
+.pcard .row{display:flex; align-items:center; justify-content:space-between; margin-top:16px}
+.avrow{display:flex}
+.avrow .av{margin-left:-6px}
+.avrow .av:first-child{margin-left:0}
+.minidial{display:flex; align-items:baseline; gap:4px}
+.minidial b{font-family:var(--mono); font-size:19px; font-weight:600}
+.page-head{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:18px; flex-wrap:wrap}
+.page-head h2{margin:0; font-size:19px; letter-spacing:-.015em}
+.page-head p{margin:3px 0 0; color:var(--muted); font-size:13px}
+
+/* ---------- board ---------- */
+.boardwrap{display:flex; align-items:stretch; gap:0; min-height:620px}
+.board{flex:1; min-width:0; padding:16px; display:flex; gap:12px; overflow-x:auto}
+.col{flex:1; min-width:215px; display:flex; flex-direction:column; gap:9px}
+.col-head{display:flex; align-items:center; gap:7px; padding:2px 3px 4px}
+.col-head .n{font-family:var(--mono); font-size:11px; color:var(--faint)}
+.col-drop{display:flex; flex-direction:column; gap:9px; flex:1; border-radius:var(--radius);
+  padding:3px; transition:background .12s ease, box-shadow .12s ease}
+.col-drop.over{background:var(--accent-soft); box-shadow:inset 0 0 0 1px rgba(79,140,255,.35)}
+
+.card{background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--r-none);
+  border-radius:var(--radius); padding:11px 12px; cursor:grab; position:relative;
+  transition:border-color .12s ease, background .12s ease}
+.card:hover{background:var(--surface-2); border-color:var(--border-strong)}
+.card.dragging{opacity:.4}
+.card.flash{box-shadow:0 0 0 2px var(--accent), 0 0 24px rgba(79,140,255,.35)}
+.card .title{font-weight:500; font-size:13.3px; line-height:1.35; margin-bottom:9px}
+.card .foot{display:flex; align-items:center; gap:8px; color:var(--faint); font-size:11px}
+.card .foot .sep{opacity:.45}
+.card .reason{margin-top:8px; padding-top:8px; border-top:1px solid var(--border);
+  font-size:11.5px; line-height:1.4; color:var(--muted)}
+.card .score{margin-left:auto; font-family:var(--mono); font-size:11px; font-weight:600}
+.card.sev{animation:pulse 2.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{border-left-color:var(--r-severe)}50%{border-left-color:rgba(239,68,68,.35)}}
+.overdue{color:var(--r-high); font-weight:550}
+
+/* ---------- radar ---------- */
+.radar{width:344px; flex:none; border-left:1px solid var(--border); background:var(--surface);
+  padding:18px 16px; display:flex; flex-direction:column; gap:16px; overflow-y:auto}
+.radar h3{margin:0; font-size:13px; font-weight:600}
+.dialwrap{display:flex; flex-direction:column; align-items:center; gap:2px}
+.dial-band{font-size:12px; font-weight:600}
+.dial-sub{font-size:11px; color:var(--faint)}
+.chips{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+.chip{background:var(--surface-2); border:1px solid var(--border); border-radius:9px;
+  padding:9px 8px; text-align:center}
+.chip b{display:block; font-family:var(--mono); font-size:17px; font-weight:600; line-height:1.2}
+.chip span{font-size:10px; letter-spacing:.04em; text-transform:uppercase; color:var(--faint)}
+.rlist{display:flex; flex-direction:column; gap:7px}
+.rrow{display:flex; gap:10px; align-items:flex-start; padding:9px 10px; border-radius:9px;
+  background:var(--surface-2); border:1px solid var(--border); cursor:pointer; text-align:left; width:100%}
+.rrow:hover{border-color:var(--border-strong); background:var(--surface-3)}
+.badge{font-family:var(--mono); font-size:11.5px; font-weight:650; padding:2px 6px; border-radius:6px; flex:none}
+.rrow .t{font-size:12.5px; font-weight:500; line-height:1.3}
+.rrow .r{font-size:11px; color:var(--muted); margin-top:2px; line-height:1.35}
+.bars{display:flex; flex-direction:column; gap:10px}
+.bar-row .top{display:flex; align-items:center; gap:7px; margin-bottom:5px; font-size:12px}
+.bar-row .hrs{margin-left:auto; font-family:var(--mono); font-size:11px; color:var(--muted)}
+.track{height:7px; border-radius:99px; background:var(--surface-3); position:relative; overflow:hidden}
+.fill{height:100%; border-radius:99px; transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.cap-mark{position:absolute; top:-2px; bottom:-2px; width:1px; background:var(--border-strong)}
+.divider{height:1px; background:var(--border)}
+.radar-foot{margin-top:auto; display:flex; flex-direction:column; gap:8px}
+.foot-note{font-size:11px; color:var(--faint); text-align:center}
+
+/* ---------- intake ---------- */
+.intake{display:grid; grid-template-columns:1fr 1fr; gap:16px; padding:20px}
+.pane{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px;
+  display:flex; flex-direction:column; gap:12px; min-height:520px}
+.pane textarea{flex:1; min-height:240px; resize:vertical; padding:12px; border-radius:9px;
+  background:var(--bg); border:1px solid var(--border); font-size:13px; line-height:1.6; font-family:inherit}
+.pane textarea:focus{border-color:var(--accent); outline:none}
+.steps{display:flex; flex-direction:column; gap:9px}
+.step{display:flex; align-items:center; gap:9px; font-size:12.5px; color:var(--faint)}
+.step.on{color:var(--text)}
+.step.done{color:var(--muted)}
+.step .ic{width:15px;height:15px;border-radius:50%;border:1.5px solid currentColor; flex:none; display:grid; place-items:center}
+.step.on .ic{border-color:var(--accent); border-right-color:transparent; animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.step.done .ic{background:var(--r-none); border-color:var(--r-none)}
+.draft{background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:11px 12px}
+.draft .dtitle{font-size:13px; font-weight:500; margin-bottom:7px; display:flex; gap:7px; align-items:flex-start}
+.spark{color:var(--accent); flex:none; margin-top:1px}
+.draft .fields{display:flex; gap:7px; flex-wrap:wrap}
+.pill{font-size:11px; padding:3px 8px; border-radius:99px; background:var(--surface-3);
+  border:1px solid var(--border); color:var(--muted)}
+.scroll{overflow-y:auto; max-height:420px; display:flex; flex-direction:column; gap:9px; padding-right:2px}
+
+/* ---------- settings ---------- */
+.tbl{width:100%; border-collapse:collapse}
+.tbl th{text-align:left; padding:9px 12px; font-size:11px; letter-spacing:.055em;
+  text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--border); font-weight:500}
+.tbl td{padding:11px 12px; border-bottom:1px solid var(--border); font-size:13px; vertical-align:middle}
+.tbl input[type=number]{width:66px; padding:5px 8px; border-radius:7px; background:var(--surface-2);
+  border:1px solid var(--border); font-family:var(--mono); font-size:12.5px}
+.tbl input:focus{border-color:var(--accent); outline:none}
+.role{font-size:11px; padding:2px 8px; border-radius:99px; background:var(--surface-2);
+  border:1px solid var(--border); color:var(--muted)}
+.panel{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden}
+.panel-head{padding:14px 16px; border-bottom:1px solid var(--border)}
+.panel-head h3{margin:0; font-size:14px}
+.panel-head p{margin:2px 0 0; font-size:12px; color:var(--faint)}
+.invite{display:flex; gap:8px; padding:16px; flex-wrap:wrap}
+.invite code{flex:1; min-width:200px; padding:8px 11px; border-radius:8px; background:var(--bg);
+  border:1px solid var(--border); font-family:var(--mono); font-size:11.5px; color:var(--muted);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+
+/* ---------- overlays ---------- */
+.scrim{position:fixed; inset:0; background:rgba(4,7,12,.72); display:grid; place-items:center;
+  padding:20px; z-index:40; animation:fade .18s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal{width:100%; max-width:560px; background:var(--surface); border:1px solid var(--border-strong);
+  border-radius:var(--radius-lg); box-shadow:var(--shadow); max-height:88vh; overflow-y:auto;
+  animation:rise .22s cubic-bezier(.2,.8,.2,1)}
+@keyframes rise{from{opacity:0; transform:translateY(10px)}to{opacity:1; transform:none}}
+.modal-head{padding:16px 18px; border-bottom:1px solid var(--border); display:flex; gap:12px; align-items:flex-start}
+.modal-head h3{margin:0; font-size:15.5px; letter-spacing:-.01em}
+.modal-head p{margin:3px 0 0; font-size:12.5px; color:var(--muted)}
+.modal-body{padding:18px}
+.modal-foot{padding:14px 18px; border-top:1px solid var(--border); display:flex; gap:9px; justify-content:flex-end}
+.form-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+.form-grid .full{grid-column:1/-1}
+.form-grid label{display:block; margin-bottom:5px}
+.form-grid input,.form-grid select{width:100%; padding:8px 10px; border-radius:8px;
+  background:var(--surface-2); border:1px solid var(--border); font-size:13px}
+.form-grid input:focus,.form-grid select:focus{border-color:var(--accent); outline:none}
+
+.delta{display:flex; align-items:center; justify-content:center; gap:16px; padding:18px;
+  background:var(--surface-2); border-radius:var(--radius); margin-bottom:16px}
+.delta .n{font-family:var(--mono); font-size:38px; font-weight:600; line-height:1}
+.delta .arrow{color:var(--faint)}
+.delta .cap{font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--faint); text-align:center; margin-top:4px}
+.chg-group{margin-bottom:14px}
+.chg-group > .label{margin-bottom:7px; display:block}
+.chg{padding:10px 12px; border-radius:9px; background:var(--surface-2); border:1px solid var(--border); margin-bottom:7px}
+.chg .what{font-size:13px}
+.chg .what b{font-weight:600}
+.chg .why{font-size:11.5px; color:var(--muted); margin-top:3px; font-style:italic}
+
+.toast{position:fixed; left:50%; bottom:26px; transform:translateX(-50%);
+  display:flex; align-items:center; gap:14px; padding:11px 14px; border-radius:11px;
+  background:var(--surface-3); border:1px solid var(--border-strong); box-shadow:var(--shadow);
+  z-index:50; font-size:13px; animation:rise .2s ease}
+.toast button{font-weight:600; color:var(--accent)}
+
+.legend{margin-top:14px; display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; color:var(--faint)}
+.legend span{display:inline-flex; align-items:center; gap:6px}
+.legend i{width:9px;height:9px;border-radius:3px; display:block}
+
+@media (max-width:1100px){
+  .radar{width:300px}
+  .intake{grid-template-columns:1fr}
+}
+@media (max-width:820px){
+  .boardwrap{flex-direction:column}
+  .radar{width:auto; border-left:none; border-top:1px solid var(--border)}
+  .board{min-height:380px}
+  .col{min-width:190px}
+  .form-grid{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important; transition-duration:.01ms !important}
+}
+</style>
+
+<div class="frame">
+  <div class="protobar">
+    <span class="proto-tag"><i></i>PlanPulse · interactive mockup</span>
+    <div class="screens" role="tablist" id="screens">
+      <button role="tab" data-s="auth">Sign in</button>
+      <button role="tab" data-s="dash">Dashboard</button>
+      <button role="tab" data-s="intake">Intake</button>
+      <button role="tab" data-s="board" aria-selected="true">Board + Risk Radar</button>
+      <button role="tab" data-s="settings">Settings</button>
+    </div>
+    <span class="hint">Drag cards between columns · click a card to edit · hit Replan</span>
+  </div>
+
+  <div class="window">
+    <div class="chrome">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="url" id="url">planpulse.app/p/mobile-v2</span>
+    </div>
+
+    <!-- ======== TOP BAR ======== -->
+    <div class="topbar" id="topbar">
+      <span class="brand">
+        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+          <path d="M1 11 L5 11 L7 4 L10 15 L12 9 L17 9" fill="none" stroke="#4F8CFF" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        PlanPulse
+      </span>
+      <span class="proj">Mobile App v2 Launch <span class="chev">▾</span></span>
+      <span class="spacer"></span>
+      <span class="chip-health" id="topHealth"></span>
+      <span class="av" id="topAv">ZA</span>
+    </div>
+
+    <div class="stage" id="stage"></div>
+  </div>
+
+  <div class="legend">
+    <span><i style="background:var(--r-none)"></i>Healthy 0–24</span>
+    <span><i style="background:var(--r-low)"></i>Watch 25–44</span>
+    <span><i style="background:var(--r-med)"></i>At risk 45–64</span>
+    <span><i style="background:var(--r-high)"></i>Critical 65–84</span>
+    <span><i style="background:var(--r-severe)"></i>Blocking 85–100</span>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   PlanPulse — interactive mockup
+   Risk engine, board, radar and replan all run for real on in-memory data.
+   ========================================================================= */
+
+const STATUSES = [
+  {k:'todo',        name:'Todo'},
+  {k:'in_progress', name:'In progress'},
+  {k:'blocked',     name:'Blocked'},
+  {k:'done',        name:'Done'},
+];
+
+const members = [
+  {id:'m1', name:'Zaheer', init:'ZA', cap:30, role:'owner'},
+  {id:'m2', name:'Priya',  init:'PR', cap:30, role:'member'},
+  {id:'m3', name:'Rahul',  init:'RA', cap:20, role:'member'},
+  {id:'m4', name:'Sneha',  init:'SN', cap:30, role:'member'},
+  {id:'m5', name:'Arjun',  init:'AR', cap:15, role:'member'},
+];
+
+// due = days from today (negative = overdue) · stale = days sitting in current status
+let tasks = [
+  {id:'t01', title:'Design system audit',                status:'done',        pri:'medium',   who:'m4', est:8,  due:-6, stale:6},
+  {id:'t02', title:'Set up CI pipeline',                 status:'done',        pri:'high',     who:'m1', est:6,  due:-4, stale:4},
+  {id:'t03', title:'Wireframe onboarding',               status:'done',        pri:'low',      who:'m4', est:5,  due:-3, stale:3},
+  {id:'t04', title:'API authentication service',         status:'in_progress', pri:'critical', who:'m2', est:16, due:-2, stale:9},
+  {id:'t05', title:'Payment gateway integration',        status:'in_progress', pri:'critical', who:'m2', est:14, due:-1, stale:5},
+  {id:'t06', title:'Push notification service',          status:'in_progress', pri:'high',     who:'m3', est:10, due:0,  stale:2},
+  {id:'t07', title:'Profile screen',                     status:'in_progress', pri:'medium',   who:'m5', est:8,  due:5,  stale:1},
+  {id:'t08', title:'Session management',                 status:'blocked',     pri:'high',     who:'m2', est:12, due:-1, stale:4},
+  {id:'t09', title:'Checkout flow',                      status:'blocked',     pri:'critical', who:'m3', est:10, due:1,  stale:3},
+  {id:'t10', title:'Biometric login',                    status:'todo',        pri:'medium',   who:'m2', est:8,  due:2,  stale:2},
+  {id:'t11', title:'Order history screen',               status:'todo',        pri:'medium',   who:'m3', est:6,  due:3,  stale:2},
+  {id:'t12', title:'Refund handling',                    status:'todo',        pri:'high',     who:'m5', est:7,  due:4,  stale:1},
+  {id:'t13', title:'Analytics events',                   status:'todo',        pri:'low',      who:'m4', est:5,  due:6,  stale:1},
+  {id:'t14', title:'Release checklist and store submit', status:'todo',        pri:'critical', who:'m1', est:6,  due:8,  stale:1},
+];
+
+const deps = [
+  ['t04','t08'], ['t04','t10'], ['t04','t14'],
+  ['t05','t09'], ['t05','t12'],
+  ['t08','t07'], ['t09','t11'], ['t06','t14'],
+];
+
+const PRI_RANK = {low:0, medium:1, high:2, critical:3};
+const TARGET_DAYS = 10;
+
+/* ---------------- risk engine ---------------- */
+const band = s => s>=85?'severe' : s>=65?'high' : s>=45?'med' : s>=25?'low' : 'none';
+const bandName = s => ({severe:'Blocking', high:'Critical', med:'At risk', low:'Watch', none:'Healthy'})[band(s)];
+const riskColor = s => `var(--r-${band(s)})`;
+const healthColor = h => riskColor(100 - h);
+const healthBand = h => ({severe:'Critical', high:'At risk', med:'Slipping', low:'On track', none:'Healthy'})[band(100-h)];
+
+function downstream(id){
+  const seen = new Set(); const stack = [id];
+  while(stack.length){
+    const cur = stack.pop();
+    for(const [a,b] of deps) if(a===cur && !seen.has(b)){ seen.add(b); stack.push(b); }
+  }
+  return seen.size;
+}
+
+function loadOf(mid){
+  return tasks.filter(t => t.who===mid && t.status!=='done')
+              .reduce((s,t)=>s+t.est, 0);
+}
+
+function compute(){
+  const live = tasks.filter(t=>t.status!=='done');
+  const total = Math.max(tasks.length, 1);
+  const loads = {}; members.forEach(m => loads[m.id] = loadOf(m.id));
+
+  const scored = tasks.map(t => {
+    if(t.status==='done') return {...t, risk:0, f:{s:0,b:0,l:0,d:0}};
+    const estDays = Math.max(t.est/6, .5);
+    // staleness only counts for work that has actually started
+    const s = (t.status==='in_progress'||t.status==='blocked') ? Math.min(1, t.stale/7) : 0;
+    const b = Math.min(1, downstream(t.id)/total);
+    const m = members.find(x=>x.id===t.who);
+    const l = m ? Math.min(1, Math.max(0, loads[t.who]/m.cap - 1)) : 0;
+    const d = Math.min(1, Math.max(0, 1 - t.due/estDays));
+    const risk = Math.round(30*s + 25*b + 25*l + 20*d);
+    return {...t, risk, f:{s,b,l,d}};
+  });
+
+  const liveScored = scored.filter(t=>t.status!=='done');
+  const wSum = liveScored.reduce((a,t)=>a+t.est, 0) || 1;
+  const wAvg = liveScored.reduce((a,t)=>a+t.risk*t.est, 0) / wSum;
+  const worst = liveScored.reduce((a,t)=>Math.max(a,t.risk), 0);
+  // a project is as healthy as its worst problem, tempered by the overall load
+  const health = Math.max(0, Math.min(100, Math.round(100 - (0.6*worst + 0.4*wAvg))));
+
+  return {scored, health, loads};
+}
+
+function reason(t){
+  const bits = [];
+  if(t.f.s >= .5) bits.push(`${t.stale} days in ${t.status==='blocked'?'blocked':'progress'}`);
+  if(t.due < 0) bits.push(`${Math.abs(t.due)} days past due`);
+  else if(t.f.d > .3) bits.push('due before the work fits');
+  if(t.f.l > 0){
+    const m = members.find(x=>x.id===t.who);
+    bits.push(`${m.name} at ${Math.round(loadOf(t.who)/m.cap*100)}% capacity`);
+  }
+  const dn = downstream(t.id);
+  if(dn) bits.push(`${dn} task${dn>1?'s':''} waiting behind it`);
+  if(!bits.length) return 'Tracking normally.';
+  return bits.slice(0,3).join(', ').replace(/^./, c=>c.toUpperCase()) + '.';
+}
+
+/* ---------------- tiny helpers ---------------- */
+const $ = (sel, el=document) => el.querySelector(sel);
+const el = (tag, cls, html) => { const n=document.createElement(tag); if(cls) n.className=cls; if(html!=null) n.innerHTML=html; return n; };
+const memberOf = id => members.find(m=>m.id===id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function countUp(node, from, to, ms=1200){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){ node.textContent = to; return; }
+  const t0 = performance.now();
+  const tick = now => {
+    const p = Math.min(1, (now-t0)/ms);
+    const e = 1 - Math.pow(1-p, 3);
+    node.textContent = Math.round(from + (to-from)*e);
+    if(p < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+let screen = 'board';
+const stage = $('#stage');
+
+/* ---------------- top bar health chip ---------------- */
+function renderTop(){
+  const {health} = compute();
+  const showApp = screen !== 'auth';
+  $('#topbar').hidden = !showApp;
+  $('#url').textContent = {auth:'planpulse.app/auth', dash:'planpulse.app', intake:'planpulse.app/p/mobile-v2/intake',
+                           board:'planpulse.app/p/mobile-v2', settings:'planpulse.app/settings'}[screen];
+  $('#topHealth').innerHTML =
+    `<span style="width:8px;height:8px;border-radius:50%;background:${healthColor(health)};display:block"></span>
+     Health <b class="numeral" style="color:${healthColor(health)}">${health}</b>`;
+}
+
+/* =========================  SCREENS  ========================= */
+
+function viewAuth(){
+  const n = el('div','auth');
+  n.innerHTML = `
+    <div class="auth-card">
+      <div class="auth-mark">
+        <svg width="22" height="22" viewBox="0 0 18 18" aria-hidden="true">
+          <path d="M1 11 L5 11 L7 4 L10 15 L12 9 L17 9" fill="none" stroke="#4F8CFF" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h1>PlanPulse</h1>
+      <p class="sub">Your board already knows what's going to slip. This one tells you.</p>
+      <div class="field"><label class="label" for="em">Work email</label>
+        <input id="em" type="email" value="zaheer@acme.io" autocomplete="off"></div>
+      <div class="field"><label class="label" for="pw">Password</label>
+        <input id="pw" type="password" value="hackathon" autocomplete="off"></div>
+      <button class="btn primary wide" data-go="dash" style="margin-top:6px">Sign in</button>
+      <div class="or">or</div>
+      <button class="btn wide" data-go="board">View the demo board</button>
+      <p style="color:var(--faint); font-size:11.5px; margin-top:18px">
+        No setup. The demo board is seeded with a real 14-task launch plan.</p>
+    </div>`;
+  n.addEventListener('click', e => {
+    const b = e.target.closest('[data-go]');
+    if(b) go(b.dataset.go);
+  });
+  return n;
+}
+
+function viewDash(){
+  const {health} = compute();
+  const open = tasks.filter(t=>t.status!=='done').length;
+  const n = el('div','pad');
+  n.innerHTML = `
+    <div class="page-head">
+      <div><h2>Projects</h2><p>One workspace · Acme Delivery</p></div>
+      <button class="btn primary">New project</button>
+    </div>
+    <div class="grid-proj">
+      <div class="pcard" data-go="board" style="border-left-color:${healthColor(health)}">
+        <h3>Mobile App v2 Launch</h3>
+        <div class="meta">${open} open · ${TARGET_DAYS} days to target</div>
+        <div class="row">
+          <div class="avrow">${members.map(m=>`<span class="av sm">${m.init}</span>`).join('')}</div>
+          <div class="minidial"><b class="numeral" style="color:${healthColor(health)}">${health}</b>
+            <span class="label">${healthBand(health)}</span></div>
+        </div>
+      </div>
+      <div class="pcard" style="border-left-color:var(--r-none)">
+        <h3>Website refresh</h3>
+        <div class="meta">4 open · 21 days to target</div>
+        <div class="row">
+          <div class="avrow"><span class="av sm">SN</span><span class="av sm">ZA</span></div>
+          <div class="minidial"><b class="numeral" style="color:var(--r-none)">88</b>
+            <span class="label">Healthy</span></div>
+        </div>
+      </div>
+      <div class="pcard" style="border-left-color:var(--r-low)">
+        <h3>Q4 infra hardening</h3>
+        <div class="meta">7 open · 34 days to target</div>
+        <div class="row">
+          <div class="avrow"><span class="av sm">RA</span><span class="av sm">AR</span><span class="av sm">PR</span></div>
+          <div class="minidial"><b class="numeral" style="color:var(--r-low)">71</b>
+            <span class="label">On track</span></div>
+        </div>
+      </div>
+    </div>`;
+  n.addEventListener('click', e => { if(e.target.closest('[data-go]')) go('board'); });
+  return n;
+}
+
+const SAMPLE = `Standup notes - Mon
+
+Priya still on the auth service, says another week. Everything OAuth
+touches is stuck behind it - session mgmt, biometric login.
+Payments: sandbox works, live keys blocked on legal. ~2 days once unblocked.
+Rahul picking up push notifications, maybe 10 hours.
+Checkout can't start until payments lands.
+Sneha free from Thursday, can take analytics events.
+Store submission checklist - nobody owns this yet. Needs to be someone.`;
+
+function viewIntake(){
+  const n = el('div','intake');
+  n.innerHTML = `
+    <div class="pane">
+      <div>
+        <h3 style="margin:0 0 3px; font-size:14px">Paste your notes</h3>
+        <p style="margin:0; font-size:12.5px; color:var(--muted)">
+          Meeting notes, a Slack thread, a paragraph. Anything with work in it.</p>
+      </div>
+      <textarea id="notes" placeholder="Paste meeting notes here…"></textarea>
+      <div style="display:flex; gap:8px; flex-wrap:wrap">
+        <button class="btn" id="sampleBtn">Use sample notes</button>
+        <button class="btn primary" id="parseBtn" style="margin-left:auto">Find the tasks</button>
+      </div>
+    </div>
+    <div class="pane" id="right">
+      <div>
+        <h3 style="margin:0 0 3px; font-size:14px">Draft tasks</h3>
+        <p style="margin:0; font-size:12.5px; color:var(--muted)">
+          Nothing is saved until you accept. Edit anything first.</p>
+      </div>
+      <div id="rightBody" style="flex:1; display:grid; place-items:center; color:var(--faint); font-size:13px; text-align:center">
+        Paste some notes to get started
+      </div>
+    </div>`;
+
+  const notes = $('#notes', n), right = $('#rightBody', n);
+
+  $('#sampleBtn', n).onclick = () => { notes.value = SAMPLE; notes.focus(); };
+
+  $('#parseBtn', n).onclick = () => {
+    if(!notes.value.trim()){ notes.value = SAMPLE; }
+    const labels = ['Reading notes', 'Finding tasks', 'Estimating effort', 'Detecting dependencies'];
+    right.style.display = 'block';
+    right.innerHTML = `<div class="steps">${labels.map((l,i)=>
+      `<div class="step" data-i="${i}"><span class="ic"></span>${l}…</div>`).join('')}</div>`;
+    let i = 0;
+    const steps = [...right.querySelectorAll('.step')];
+    steps[0].classList.add('on');
+    const next = () => {
+      steps[i].classList.remove('on'); steps[i].classList.add('done');
+      steps[i].querySelector('.ic').innerHTML =
+        '<svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 4.2 3 6.2 7 1.8" fill="none" stroke="#0B0F17" stroke-width="1.6" stroke-linecap="round"/></svg>';
+      i++;
+      if(i < steps.length){ steps[i].classList.add('on'); setTimeout(next, 780); }
+      else setTimeout(showDrafts, 420);
+    };
+    setTimeout(next, 780);
+  };
+
+  const DRAFTS = [
+    {title:'Finish API authentication service', est:16, who:'Priya',  dep:'—',                      pri:'critical'},
+    {title:'Unblock live payment keys (legal)', est:2,  who:'Priya',  dep:'—',                      pri:'critical'},
+    {title:'Session management',                est:12, who:'Priya',  dep:'API authentication',      pri:'high'},
+    {title:'Biometric login',                   est:8,  who:'Priya',  dep:'API authentication',      pri:'medium'},
+    {title:'Push notification service',         est:10, who:'Rahul',  dep:'—',                      pri:'high'},
+    {title:'Checkout flow',                     est:10, who:'Rahul',  dep:'Payment gateway',         pri:'critical'},
+    {title:'Analytics events',                  est:5,  who:'Sneha',  dep:'—',                      pri:'low'},
+    {title:'Store submission checklist',        est:6,  who:'Unassigned', dep:'—',                  pri:'critical'},
+  ];
+
+  function showDrafts(){
+    right.innerHTML = `
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px">
+        <span class="label">8 tasks found</span>
+        <span style="font-size:11.5px; color:var(--faint)">
+          <svg class="spark" width="11" height="11" viewBox="0 0 12 12" style="display:inline; vertical-align:-1px">
+            <path d="M6 1 L7 5 L11 6 L7 7 L6 11 L5 7 L1 6 L5 5 Z" fill="currentColor"/></svg>
+          marks a value the model inferred</span>
+      </div>
+      <div class="scroll">${DRAFTS.map(d=>`
+        <div class="draft">
+          <div class="dtitle">
+            <svg class="spark" width="11" height="11" viewBox="0 0 12 12"><path d="M6 1 L7 5 L11 6 L7 7 L6 11 L5 7 L1 6 L5 5 Z" fill="currentColor"/></svg>
+            ${esc(d.title)}
+          </div>
+          <div class="fields">
+            <span class="pill">${d.est}h</span>
+            <span class="pill">${esc(d.who)}</span>
+            <span class="pill">${esc(d.pri)}</span>
+            ${d.dep!=='—' ? `<span class="pill">blocked by ${esc(d.dep)}</span>` : ''}
+          </div>
+        </div>`).join('')}</div>
+      <div style="display:flex; gap:8px; margin-top:14px">
+        <button class="btn ghost" id="discard">Discard</button>
+        <button class="btn primary" id="accept" style="margin-left:auto">Accept all 8</button>
+      </div>`;
+    $('#accept', right).onclick = () => go('board');
+    $('#discard', right).onclick = () => { right.innerHTML = 'Paste some notes to get started';
+      right.style.display='grid'; };
+  }
+
+  return n;
+}
+
+function viewSettings(){
+  const {loads} = compute();
+  const n = el('div','pad');
+  n.innerHTML = `
+    <div class="page-head">
+      <div><h2>Team</h2><p>Capacity is the denominator of every load calculation. Change one and the board reacts.</p></div>
+    </div>
+    <div class="panel" style="margin-bottom:16px">
+      <table class="tbl">
+        <thead><tr><th>Member</th><th>Role</th><th>Weekly capacity</th><th>Assigned</th><th></th></tr></thead>
+        <tbody>${members.map(m=>{
+          const pct = Math.round(loads[m.id]/m.cap*100);
+          const over = pct > 100;
+          return `<tr>
+            <td><div style="display:flex; align-items:center; gap:9px">
+              <span class="av">${m.init}</span>${esc(m.name)}</div></td>
+            <td><span class="role">${m.role}</span></td>
+            <td><input type="number" min="0" max="80" value="${m.cap}" data-cap="${m.id}"> <span style="color:var(--faint); font-size:12px">h</span></td>
+            <td class="numeral" style="${over?'color:var(--r-high); font-weight:600':''}">${loads[m.id]}h · ${pct}%</td>
+            <td style="text-align:right"><button class="btn ghost" style="font-size:12px">Remove</button></td>
+          </tr>`;}).join('')}</tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Invite a teammate</h3>
+        <p>They join this workspace and claim their placeholder member row.</p></div>
+      <div class="invite">
+        <code>https://planpulse.app/join/8f2c41d9a7e0</code>
+        <button class="btn" id="copyBtn">Copy link</button>
+        <button class="btn primary">New link</button>
+      </div>
+    </div>`;
+
+  n.addEventListener('change', e => {
+    const id = e.target.dataset?.cap;
+    if(!id) return;
+    const v = Math.max(1, Math.min(80, +e.target.value || 1));
+    memberOf(id).cap = v;
+    render();
+  });
+  $('#copyBtn', n).onclick = e => {
+    navigator.clipboard?.writeText('https://planpulse.app/join/8f2c41d9a7e0')
+      .then(()=>{ e.target.textContent = 'Copied'; setTimeout(()=>e.target.textContent='Copy link', 1500); })
+      .catch(()=>{ e.target.textContent = 'Select and copy'; });
+  };
+  return n;
+}
+
+/* =========================  BOARD  ========================= */
+
+let lastHealth = null;
+
+function viewBoard(){
+  const {scored, health, loads} = compute();
+  const wrap = el('div','boardwrap');
+  const board = el('div','board');
+
+  STATUSES.forEach(st => {
+    const items = scored.filter(t=>t.status===st.k);
+    const col = el('div','col');
+    col.innerHTML = `<div class="col-head"><span class="label">${st.name}</span>
+      <span class="n">${items.length}</span></div>`;
+    const drop = el('div','col-drop');
+    drop.dataset.status = st.k;
+    items.forEach(t => drop.appendChild(cardEl(t)));
+    col.appendChild(drop);
+    board.appendChild(col);
+  });
+
+  wrap.appendChild(board);
+  wrap.appendChild(radarEl(scored, health, loads));
+  wireDnd(board);
+  return wrap;
+}
+
+function cardEl(t){
+  const m = memberOf(t.who);
+  const c = el('div','card');
+  c.dataset.id = t.id;
+  c.draggable = true;
+  c.style.borderLeftColor = t.status==='done' ? 'var(--border-strong)' : riskColor(t.risk);
+  if(t.risk >= 85) c.classList.add('sev');
+  const showReason = t.risk >= 45;
+  const dueTxt = t.status==='done' ? 'shipped'
+    : t.due < 0 ? `<span class="overdue">${Math.abs(t.due)}d overdue</span>`
+    : t.due === 0 ? `<span class="overdue">due today</span>` : `due in ${t.due}d`;
+  const staleTxt = (t.status==='in_progress'||t.status==='blocked') && t.stale >= 4
+    ? `<span class="sep">·</span><span class="overdue">${t.stale}d in ${t.status==='blocked'?'blocked':'progress'}</span>` : '';
+  c.innerHTML = `
+    <div class="title">${esc(t.title)}</div>
+    <div class="foot">
+      <span class="av sm">${m?m.init:'—'}</span>
+      <span>${t.est}h</span><span class="sep">·</span><span>${dueTxt}</span>${staleTxt}
+      ${t.status==='done' ? '' : `<span class="score" style="color:${riskColor(t.risk)}">${t.risk}</span>`}
+    </div>
+    ${showReason ? `<div class="reason">${esc(reason(t))}</div>` : ''}`;
+  c.onclick = e => { if(!c.classList.contains('dragging')) openTask(t.id); };
+  return c;
+}
+
+function radarEl(scored, health, loads){
+  const r = el('div','radar');
+  const live = scored.filter(t=>t.status!=='done');
+  const top = [...live].sort((a,b)=>b.risk-a.risk).slice(0,5);
+  const blocked = live.filter(t=>t.status==='blocked').length;
+  const over = members.filter(m=>loads[m.id] > m.cap).length;
+
+  r.innerHTML = `
+    <div>
+      <h3>Risk Radar</h3>
+      <p style="margin:3px 0 0; font-size:11.5px; color:var(--faint)">
+        Worst problem, weighted by everything behind it</p>
+    </div>
+    <div class="dialwrap">${dialSVG(health)}
+      <div class="dial-band" style="color:${healthColor(health)}">${healthBand(health)}</div>
+      <div class="dial-sub">project health</div>
+    </div>
+    <div class="chips">
+      <div class="chip"><b style="color:${blocked?'var(--r-high)':'var(--text)'}">${blocked}</b><span>blocked</span></div>
+      <div class="chip"><b style="color:${over?'var(--r-high)':'var(--text)'}">${over}</b><span>overloaded</span></div>
+      <div class="chip"><b>${TARGET_DAYS}</b><span>days left</span></div>
+    </div>
+    <div class="divider"></div>
+    <div>
+      <h3 style="margin-bottom:9px">Biggest risks</h3>
+      <div class="rlist">${top.map(t=>`
+        <button class="rrow" data-focus="${t.id}">
+          <span class="badge" style="background:${riskColor(t.risk)}22; color:${riskColor(t.risk)}">${t.risk}</span>
+          <span><span class="t">${esc(t.title)}</span><span class="r">${esc(reason(t))}</span></span>
+        </button>`).join('')}</div>
+    </div>
+    <div class="divider"></div>
+    <div>
+      <h3 style="margin-bottom:10px">Load this week</h3>
+      <div class="bars">${members.map(m=>{
+        const pct = loads[m.id]/m.cap;
+        const w = Math.min(100, pct*100 / Math.max(1.5, 1));
+        const col = pct > 1 ? 'var(--r-high)' : pct > .9 ? 'var(--r-med)' : 'var(--r-none)';
+        return `<div class="bar-row">
+          <div class="top"><span class="av sm">${m.init}</span>${esc(m.name)}
+            <span class="hrs" style="${pct>1?'color:var(--r-high)':''}">${loads[m.id]}/${m.cap}h</span></div>
+          <div class="track"><div class="fill" style="width:${Math.min(100, w)}%; background:${col}"></div>
+            <div class="cap-mark" style="left:66.6%"></div></div>
+        </div>`;}).join('')}</div>
+    </div>
+    <div class="radar-foot">
+      <button class="btn primary wide" id="replanBtn">Replan the week</button>
+      <div class="foot-note">Reassigns overloaded work and re-sequences dates</div>
+    </div>`;
+
+  r.addEventListener('click', e => {
+    const f = e.target.closest('[data-focus]');
+    if(f) focusCard(f.dataset.focus);
+  });
+  $('#replanBtn', r).onclick = startReplan;
+
+  // animate the dial whenever health changed since the last render
+  const numNode = $('#dialNum', r);
+  if(lastHealth !== null && lastHealth !== health) countUp(numNode, lastHealth, health, 1200);
+  else numNode.textContent = health;
+  lastHealth = health;
+  return r;
+}
+
+function dialSVG(health){
+  const C = Math.PI * 60;
+  const off = C - C * health / 100;
+  return `<svg viewBox="0 0 140 84" style="width:150px" role="img" aria-label="Project health ${health} out of 100">
+    <path d="M10 70 A60 60 0 0 1 130 70" fill="none" stroke="var(--surface-3)" stroke-width="10" stroke-linecap="round"/>
+    <path d="M10 70 A60 60 0 0 1 130 70" fill="none" stroke="${healthColor(health)}" stroke-width="10"
+          stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${off}"
+          style="transition:stroke-dashoffset 1.2s cubic-bezier(.2,.8,.2,1), stroke .4s ease"/>
+    <text id="dialNum" x="70" y="66" text-anchor="middle" class="numeral"
+          style="font-size:34px; font-weight:600; fill:var(--text)">${health}</text>
+  </svg>`;
+}
+
+function focusCard(id){
+  const c = document.querySelector(`.card[data-id="${id}"]`);
+  if(!c) return;
+  c.scrollIntoView({block:'nearest', behavior:'smooth'});
+  c.classList.add('flash');
+  setTimeout(()=>c.classList.remove('flash'), 1500);
+}
+
+/* ---------------- drag and drop ---------------- */
+function wireDnd(board){
+  let dragId = null;
+  board.addEventListener('dragstart', e => {
+    const c = e.target.closest('.card'); if(!c) return;
+    dragId = c.dataset.id; c.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    try{ e.dataTransfer.setData('text/plain', dragId); }catch(_){}
+  });
+  board.addEventListener('dragend', e => {
+    e.target.closest('.card')?.classList.remove('dragging');
+    board.querySelectorAll('.col-drop').forEach(d=>d.classList.remove('over'));
+  });
+  board.addEventListener('dragover', e => {
+    const d = e.target.closest('.col-drop'); if(!d) return;
+    e.preventDefault(); d.classList.add('over');
+  });
+  board.addEventListener('dragleave', e => {
+    const d = e.target.closest('.col-drop');
+    if(d && !d.contains(e.relatedTarget)) d.classList.remove('over');
+  });
+  board.addEventListener('drop', e => {
+    const d = e.target.closest('.col-drop'); if(!d || !dragId) return;
+    e.preventDefault();
+    const t = tasks.find(x=>x.id===dragId);
+    if(t && t.status !== d.dataset.status){
+      t.status = d.dataset.status;
+      t.stale = 0;                                   // the status clock restarts
+      if(t.status === 'done') t.risk = 0;
+      render();
+    } else { d.classList.remove('over'); }
+    dragId = null;
+  });
+}
+
+/* ---------------- task modal ---------------- */
+function openTask(id){
+  const t = tasks.find(x=>x.id===id); if(!t) return;
+  const s = compute().scored.find(x=>x.id===id);
+  const scrim = el('div','scrim');
+  scrim.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Edit task">
+      <div class="modal-head">
+        <div style="flex:1">
+          <h3>${esc(t.title)}</h3>
+          <p>${t.status==='done' ? 'Shipped — no risk score' :
+             `Risk ${s.risk} · ${bandName(s.risk)} · ${esc(reason(s))}`}</p>
+        </div>
+        ${t.status==='done' ? '' :
+          `<span class="badge" style="background:${riskColor(s.risk)}22; color:${riskColor(s.risk)}; font-size:14px; padding:5px 9px">${s.risk}</span>`}
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="full"><label class="label" for="f-title">Title</label>
+            <input id="f-title" value="${esc(t.title)}"></div>
+          <div><label class="label" for="f-status">Status</label>
+            <select id="f-status">${STATUSES.map(x=>`<option value="${x.k}" ${x.k===t.status?'selected':''}>${x.name}</option>`).join('')}</select></div>
+          <div><label class="label" for="f-pri">Priority</label>
+            <select id="f-pri">${Object.keys(PRI_RANK).map(p=>`<option ${p===t.pri?'selected':''}>${p}</option>`).join('')}</select></div>
+          <div><label class="label" for="f-who">Assignee</label>
+            <select id="f-who">${members.map(m=>`<option value="${m.id}" ${m.id===t.who?'selected':''}>${m.name} · ${loadOf(m.id)}/${m.cap}h</option>`).join('')}</select></div>
+          <div><label class="label" for="f-est">Estimate (hours)</label>
+            <input id="f-est" type="number" min="1" max="80" value="${t.est}"></div>
+          <div class="full"><label class="label" for="f-due">Due in (days from today)</label>
+            <input id="f-due" type="number" min="-20" max="60" value="${t.due}"></div>
+        </div>
+        ${t.status==='done' ? '' : `
+        <div style="margin-top:18px">
+          <span class="label" style="display:block; margin-bottom:9px">What makes up this score</span>
+          ${factorBars(s)}
+        </div>`}
+      </div>
+      <div class="modal-foot">
+        <button class="btn danger" id="del">Delete</button>
+        <span style="flex:1"></span>
+        <button class="btn ghost" id="cancel">Cancel</button>
+        <button class="btn primary" id="save">Save changes</button>
+      </div>
+    </div>`;
+  const close = () => scrim.remove();
+  scrim.addEventListener('click', e => { if(e.target === scrim) close(); });
+  document.addEventListener('keydown', function esc2(e){
+    if(e.key === 'Escape'){ close(); document.removeEventListener('keydown', esc2); }
+  });
+  $('#cancel', scrim).onclick = close;
+  $('#del', scrim).onclick = () => { tasks = tasks.filter(x=>x.id!==id); close(); render(); };
+  $('#save', scrim).onclick = () => {
+    const ns = $('#f-status', scrim).value;
+    if(ns !== t.status) t.stale = 0;
+    t.title = $('#f-title', scrim).value.trim() || t.title;
+    t.status = ns;
+    t.pri = $('#f-pri', scrim).value;
+    t.who = $('#f-who', scrim).value;
+    t.est = Math.max(1, +$('#f-est', scrim).value || t.est);
+    t.due = +$('#f-due', scrim).value;
+    close(); render();
+  };
+  document.body.appendChild(scrim);
+  $('#f-title', scrim).focus();
+}
+
+function factorBars(s){
+  const rows = [
+    ['Staleness',        s.f.s, 30, 'time sitting in one status'],
+    ['Blocked depth',    s.f.b, 25, 'work waiting behind it'],
+    ['Owner overload',   s.f.l, 25, 'assignee past capacity'],
+    ['Deadline pressure',s.f.d, 20, 'time left versus work left'],
+  ];
+  return `<div class="bars">${rows.map(([n,v,w,d])=>`
+    <div class="bar-row">
+      <div class="top">${n}<span class="hrs">${Math.round(v*w)} / ${w}</span></div>
+      <div class="track"><div class="fill" style="width:${v*100}%; background:${v>.66?'var(--r-high)':v>.33?'var(--r-med)':'var(--r-none)'}"></div></div>
+      <div style="font-size:11px; color:var(--faint); margin-top:4px">${d}</div>
+    </div>`).join('')}</div>`;
+}
+
+/* ---------------- replan ---------------- */
+let undoSnapshot = null;
+
+function computeReplan(){
+  const changes = [];
+  const sim = tasks.map(t=>({...t}));
+  const load = id => sim.filter(t=>t.who===id && t.status!=='done').reduce((a,t)=>a+t.est,0);
+
+  // 1. rebalance anyone over capacity onto whoever has the most room
+  let guard = 0;
+  while(guard++ < 12){
+    const over = members.filter(m=>load(m.id) > m.cap)
+      .sort((a,b)=>(load(b.id)-b.cap)-(load(a.id)-a.cap))[0];
+    if(!over) break;
+    const movable = sim.filter(t=>t.who===over.id && t.status!=='done' && t.status!=='in_progress')
+      .sort((a,b)=>PRI_RANK[a.pri]-PRI_RANK[b.pri])[0];
+    if(!movable) break;
+    const to = members.filter(m=>m.id!==over.id)
+      .map(m=>({m, free:m.cap-load(m.id)}))
+      .sort((a,b)=>b.free-a.free)[0];
+    if(!to || to.free < movable.est) break;
+    changes.push({
+      id: movable.id, field:'assignee', from:over.name, to:to.m.name,
+      what:`<b>${esc(movable.title)}</b> moves from ${over.name} to ${to.m.name}`,
+      why:`${over.name} is at ${Math.round(load(over.id)/over.cap*100)}% of capacity; ${to.m.name} has ${to.free}h free`
+    });
+    movable.who = to.m.id;
+  }
+
+  // 2. push dates that cannot fit the work left
+  sim.filter(t=>t.status!=='done').forEach(t=>{
+    const estDays = Math.max(t.est/6, .5);
+    if(t.due < estDays){
+      const nd = Math.ceil(estDays) + 2;
+      changes.push({
+        id:t.id, field:'due', from:t.due, to:nd,
+        what:`<b>${esc(t.title)}</b> moves out ${nd - t.due} days`,
+        why: t.due < 0 ? `Already ${Math.abs(t.due)} days past due and ${t.est}h of work remain`
+                       : `${t.est}h of work cannot finish in ${t.due} day${t.due===1?'':'s'}`
+      });
+      t.due = nd;
+    }
+  });
+
+  return {changes, sim};
+}
+
+function projectedHealth(sim){
+  const before = tasks;
+  tasks = sim;
+  const h = compute().health;
+  tasks = before;
+  return h;
+}
+
+function startReplan(){
+  const btn = $('#replanBtn');
+  const {changes, sim} = computeReplan();
+  if(!changes.length){
+    toast('Nothing to replan — the board is already balanced.');
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = `Analysing ${tasks.filter(t=>t.status!=='done').length} tasks…`;
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.textContent = 'Replan the week';
+    showDiff(changes, sim);
+  }, 1400);
+}
+
+function showDiff(changes, sim){
+  const before = compute().health;
+  const after = projectedHealth(sim);
+  const groups = [
+    ['Reassigned', changes.filter(c=>c.field==='assignee')],
+    ['Rescheduled', changes.filter(c=>c.field==='due')],
+  ].filter(([,c])=>c.length);
+
+  const scrim = el('div','scrim');
+  scrim.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Proposed replan">
+      <div class="modal-head">
+        <div><h3>Proposed replan</h3>
+          <p>${changes.length} change${changes.length>1?'s':''} · nothing is applied until you say so</p></div>
+      </div>
+      <div class="modal-body">
+        <div class="delta">
+          <div><div class="n" style="color:${healthColor(before)}">${before}</div><div class="cap">now</div></div>
+          <div class="arrow">
+            <svg width="26" height="12" viewBox="0 0 26 12"><path d="M0 6 H22 M17 1 L23 6 L17 11"
+              fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div><div class="n" style="color:${healthColor(after)}">${after}</div><div class="cap">after replan</div></div>
+        </div>
+        ${groups.map(([name, cs])=>`
+          <div class="chg-group"><span class="label">${name}</span>
+            ${cs.map(c=>`<div class="chg"><div class="what">${c.what}</div>
+              <div class="why">${esc(c.why)}</div></div>`).join('')}
+          </div>`).join('')}
+      </div>
+      <div class="modal-foot">
+        <button class="btn ghost" id="discard">Discard</button>
+        <button class="btn primary" id="apply">Apply ${changes.length} change${changes.length>1?'s':''}</button>
+      </div>
+    </div>`;
+  $('#discard', scrim).onclick = () => scrim.remove();
+  $('#apply', scrim).onclick = () => { scrim.remove(); applyReplan(sim); };
+  document.body.appendChild(scrim);
+  $('#apply', scrim).focus();
+}
+
+function applyReplan(sim){
+  undoSnapshot = tasks.map(t=>({...t}));
+  const first = snapshotPositions();
+  tasks = sim;
+  render();
+  flip(first);
+  toast('Plan updated', 'Undo', () => {
+    const f2 = snapshotPositions();
+    tasks = undoSnapshot; undoSnapshot = null;
+    render(); flip(f2);
+  });
+}
+
+/* FLIP: remember where every card is, then animate from there to its new home */
+function snapshotPositions(){
+  const map = new Map();
+  document.querySelectorAll('.card').forEach(c => map.set(c.dataset.id, c.getBoundingClientRect()));
+  return map;
+}
+function flip(first){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.querySelectorAll('.card').forEach(c => {
+    const a = first.get(c.dataset.id); if(!a) return;
+    const b = c.getBoundingClientRect();
+    const dx = a.left - b.left, dy = a.top - b.top;
+    if(!dx && !dy) return;
+    c.animate(
+      [{transform:`translate(${dx}px, ${dy}px)`}, {transform:'none'}],
+      {duration:420, easing:'cubic-bezier(.2,.8,.2,1)'}
+    );
+  });
+}
+
+function toast(msg, actionLabel, onAction){
+  document.querySelector('.toast')?.remove();
+  const t = el('div','toast');
+  t.innerHTML = `<span>${esc(msg)}</span>`;
+  if(actionLabel){
+    const b = el('button', null, esc(actionLabel));
+    b.onclick = () => { t.remove(); onAction && onAction(); };
+    t.appendChild(b);
+  }
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 8000);
+}
+
+/* ---------------- router ---------------- */
+function go(s){ screen = s; render(); window.scrollTo({top:0, behavior:'smooth'}); }
+
+function render(){
+  document.querySelectorAll('#screens button')
+    .forEach(b => b.setAttribute('aria-selected', String(b.dataset.s === screen)));
+  renderTop();
+  const views = {auth:viewAuth, dash:viewDash, intake:viewIntake, board:viewBoard, settings:viewSettings};
+  stage.replaceChildren(views[screen]());
+}
+
+$('#screens').addEventListener('click', e => {
+  const b = e.target.closest('button[data-s]');
+  if(b) go(b.dataset.s);
+});
+
+document.addEventListener('keydown', e => {
+  if(e.target.matches('input, textarea, select')) return;
+  if(e.key === 'r' && screen === 'board') { e.preventDefault(); $('#replanBtn')?.click(); }
+  if(e.key === 'b') go('board');
+});
+
+render();
+</script>
+
+</body></html>
